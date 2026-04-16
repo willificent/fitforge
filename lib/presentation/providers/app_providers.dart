@@ -5,6 +5,7 @@ import 'package:fitforge/data/repositories/workout_repository.dart';
 import 'package:fitforge/data/repositories/exercise_repository.dart';
 import 'package:fitforge/data/repositories/settings_repository.dart';
 import 'package:fitforge/data/seed/exercise_seed.dart';
+import 'package:fitforge/data/sync/webdav_sync_service.dart';
 import 'package:fitforge/domain/generator/workout_generator.dart';
 import 'package:fitforge/domain/generator/progressive_target_calculator.dart';
 
@@ -52,4 +53,8 @@ final themeModeProvider = FutureProvider<ThemeMode>((ref) async {
     'dark' => ThemeMode.dark,
     _ => ThemeMode.system,
   };
+});
+
+final webdavSyncProvider = Provider<WebdavSyncService>((ref) {
+  return WebdavSyncService(ref.read(settingsRepositoryProvider));
 });

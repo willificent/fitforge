@@ -50,6 +50,18 @@ class WorkoutSetDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.date.like('$monthPrefix%'))).get();
   }
 
+  Future<List<WorkoutSet>> getSetsForDateRange(
+    String startDate,
+    String endDate,
+  ) {
+    return (select(workoutSets)..where(
+          (t) =>
+              t.date.isBiggerOrEqualValue(startDate) &
+              t.date.isSmallerOrEqualValue(endDate),
+        ))
+        .get();
+  }
+
   Future<int> insertSet(WorkoutSetsCompanion entry) {
     return into(workoutSets).insert(entry);
   }

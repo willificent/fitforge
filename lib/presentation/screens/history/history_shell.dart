@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:fitforge/data/database/app_database.dart';
 import 'package:fitforge/presentation/providers/app_providers.dart';
+import 'package:fitforge/presentation/screens/history/workout_charts_tab.dart';
 
 class HistoryShell extends ConsumerStatefulWidget {
   const HistoryShell({super.key});
@@ -43,7 +44,7 @@ class _HistoryShellState extends ConsumerState<HistoryShell>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [_WorkoutDiary(), _ChartsTab()],
+        children: const [_WorkoutDiary(), WorkoutChartsTab()],
       ),
     );
   }
@@ -192,35 +193,6 @@ class _WorkoutDiaryState extends ConsumerState<_WorkoutDiary> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ChartsTab extends ConsumerWidget {
-  const _ChartsTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.bar_chart, size: 64, color: cs.outline),
-          const SizedBox(height: 16),
-          Text(
-            'Charts coming soon',
-            style: tt.titleMedium?.copyWith(color: cs.outline),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Track your progress over time',
-            style: tt.bodyMedium?.copyWith(color: cs.outline),
-          ),
-        ],
-      ),
     );
   }
 }

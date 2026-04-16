@@ -24,6 +24,13 @@ class WorkoutRepository {
     return _dao.getSetsForMonth(monthPrefix);
   }
 
+  Future<List<WorkoutSet>> getSetsForDateRange(
+    String startDate,
+    String endDate,
+  ) {
+    return _dao.getSetsForDateRange(startDate, endDate);
+  }
+
   Future<WorkoutSet?> getLastSetForExercise(String exerciseName) {
     return _dao.getLastSetForExercise(exerciseName);
   }

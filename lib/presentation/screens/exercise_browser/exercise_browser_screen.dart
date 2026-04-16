@@ -201,6 +201,8 @@ class _ExerciseTile extends StatelessWidget {
         icon: const Icon(Icons.add_circle_outlined),
         onPressed: onTap,
       ),
+      onTap: () =>
+          context.go('/exercise-detail', extra: {'exercise': exercise}),
     );
   }
 }

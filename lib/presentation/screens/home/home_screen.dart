@@ -243,14 +243,14 @@ class _WorkoutDayView extends ConsumerWidget {
   }
 }
 
-class _ExerciseCard extends StatelessWidget {
+class _ExerciseCard extends ConsumerWidget {
   final String exerciseName;
   final List<WorkoutSet> sets;
 
   const _ExerciseCard({required this.exerciseName, required this.sets});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
 
     return Card(
@@ -263,9 +263,24 @@ class _ExerciseCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    exerciseName,
-                    style: Theme.of(context).textTheme.titleMedium,
+                  child: InkWell(
+                    onTap: () async {
+                      final exercise = await ref
+                          .read(exerciseRepositoryProvider)
+                          .getByName(exerciseName);
+                      if (exercise != null && context.mounted) {
+                        context.go(
+                          '/exercise-detail',
+                          extra: {'exercise': exercise},
+                        );
+                      }
+                    },
+                    child: Text(
+                      exerciseName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
                   ),
                 ),
                 Text(

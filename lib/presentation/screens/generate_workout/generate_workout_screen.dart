@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:fitforge/domain/models/workout_generation_request.dart';
 import 'package:fitforge/domain/generator/progressive_target_calculator.dart';
 import 'package:fitforge/presentation/providers/app_providers.dart';
@@ -75,6 +77,23 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
               _buildWorkoutSummary(cs, tt),
               const SizedBox(height: 16),
               _buildExerciseList(cs, tt),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _startWorkout,
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Start Workout'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _regenerate,
+                  child: const Text('Regenerate'),
+                ),
+              ),
             ],
           ],
         ),
@@ -273,5 +292,23 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
       MuscleGroup.core => 'Core',
       MuscleGroup.fullBody => 'Full Body',
     };
+  }
+
+  void _startWorkout() {
+    if (_generatedWorkout == null) return;
+    final now = DateTime.now();
+    final dateKey =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    context.go(
+      '/workout-session',
+      extra: {'workout': _generatedWorkout, 'date': dateKey},
+    );
+  }
+
+  void _regenerate() {
+    setState(() {
+      _generatedWorkout = null;
+    });
+    _generate();
   }
 }

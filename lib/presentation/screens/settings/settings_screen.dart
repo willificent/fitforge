@@ -185,21 +185,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showWebdavSettings(BuildContext context) {
-    showDialog<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('WebDAV Sync'),
-        content: const Text(
-          'WebDAV backup sync will be available in a future update. '
-          'Configure your WebDAV server to enable automatic backups.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      builder: (context) => const _WebdavConfigSheet(),
     );
   }
 
@@ -232,6 +221,230 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: const Text('Clear'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _WebdavConfigSheet extends ConsumerStatefulWidget {
+  const _WebdavConfigSheet();
+
+  @override
+  ConsumerState<_WebdavConfigSheet> createState() => _WebdavConfigSheetState();
+}
+
+class _WebdavConfigSheetState extends ConsumerState<_WebdavConfigSheet> {
+  final _urlController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String? _statusMessage;
+  bool _isSuccess = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSettings() async {
+    final repo = ref.read(settingsRepositoryProvider);
+    _urlController.text = await repo.getWebdavUrl() ?? '';
+    _usernameController.text = await repo.getWebdavUsername() ?? '';
+    _passwordController.text = await repo.getWebdavPassword() ?? '';
+    setState(() {});
+  }
+
+  Future<void> _saveSettings() async {
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.setWebdavUrl(_urlController.text);
+    await repo.setWebdavUsername(_usernameController.text);
+    await repo.setWebdavPassword(_passwordController.text);
+  }
+
+  Future<void> _testConnection() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = null;
+    });
+
+    await _saveSettings();
+
+    final sync = ref.read(webdavSyncProvider);
+    final success = await sync.testConnection();
+
+    setState(() {
+      _isLoading = false;
+      _statusMessage = success ? 'Connection successful!' : 'Connection failed';
+      _isSuccess = success;
+    });
+  }
+
+  Future<void> _exportBackup() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = null;
+    });
+
+    final sync = ref.read(webdavSyncProvider);
+    final db = ref.read(databaseProvider);
+    final success = await sync.uploadBackup(db);
+
+    setState(() {
+      _isLoading = false;
+      _statusMessage = success ? 'Backup uploaded!' : 'Upload failed';
+      _isSuccess = success;
+    });
+  }
+
+  Future<void> _importBackup() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = null;
+    });
+
+    final sync = ref.read(webdavSyncProvider);
+    final db = ref.read(databaseProvider);
+    final backups = await sync.listRemoteBackups();
+
+    if (backups.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _statusMessage = 'No backups found';
+        _isSuccess = false;
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Select Backup'),
+        children: backups.map((name) {
+          return SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, name),
+            child: Text(name),
+          );
+        }).toList(),
+      ),
+    );
+
+    if (selected == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final count = await sync.downloadAndImport(db, selected);
+    setState(() {
+      _isLoading = false;
+      _statusMessage = 'Imported $count sets';
+      _isSuccess = count > 0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('WebDAV Sync', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _urlController,
+              decoration: const InputDecoration(
+                labelText: 'Server URL',
+                hintText: 'https://your-webdav-server.com/dav/',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.cloud),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(
+                labelText: 'Username',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_statusMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  _statusMessage!,
+                  style: TextStyle(color: _isSuccess ? Colors.green : cs.error),
+                ),
+              ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : _testConnection,
+                    child: const Text('Test'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _isLoading ? null : _saveSettings,
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _exportBackup,
+                    icon: const Icon(Icons.cloud_upload, size: 18),
+                    label: const Text('Export'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _importBackup,
+                    icon: const Icon(Icons.cloud_download, size: 18),
+                    label: const Text('Import'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

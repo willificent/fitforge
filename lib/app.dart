@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitforge/data/database/app_database.dart';
+import 'package:fitforge/domain/models/workout_generation_request.dart';
 import 'package:fitforge/presentation/screens/home/home_screen.dart';
 import 'package:fitforge/presentation/screens/exercise_browser/exercise_browser_screen.dart';
+import 'package:fitforge/presentation/screens/exercise_detail/exercise_detail_screen.dart';
 import 'package:fitforge/presentation/screens/generate_workout/generate_workout_screen.dart';
 import 'package:fitforge/presentation/screens/history/history_shell.dart';
 import 'package:fitforge/presentation/screens/settings/settings_screen.dart';
 import 'package:fitforge/presentation/screens/log_workout/workout_log_screen.dart';
+import 'package:fitforge/presentation/screens/workout_session/workout_session_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _historyNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'history');
@@ -72,6 +75,25 @@ final router = GoRouter(
           exercise: extra['exercise'] as Exercise,
           date: extra['date'] as String,
         );
+      },
+    ),
+    GoRoute(
+      path: '/workout-session',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final extra = state.extra! as Map<String, dynamic>;
+        return WorkoutSessionScreen(
+          workout: extra['workout'] as GeneratedWorkout,
+          date: extra['date'] as String,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/exercise-detail',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final extra = state.extra! as Map<String, dynamic>;
+        return ExerciseDetailScreen(exercise: extra['exercise'] as Exercise);
       },
     ),
   ],
