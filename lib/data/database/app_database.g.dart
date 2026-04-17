@@ -120,6 +120,21 @@ class $ExercisesTable extends Exercises
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _isBodyweightMeta = const VerificationMeta(
+    'isBodyweight',
+  );
+  @override
+  late final GeneratedColumn<bool> isBodyweight = GeneratedColumn<bool>(
+    'is_bodyweight',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_bodyweight" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     name,
@@ -132,6 +147,7 @@ class $ExercisesTable extends Exercises
     defaultRestSeconds,
     equipment,
     instructions,
+    isBodyweight,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -234,6 +250,15 @@ class $ExercisesTable extends Exercises
         ),
       );
     }
+    if (data.containsKey('is_bodyweight')) {
+      context.handle(
+        _isBodyweightMeta,
+        isBodyweight.isAcceptableOrUnknown(
+          data['is_bodyweight']!,
+          _isBodyweightMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -283,6 +308,10 @@ class $ExercisesTable extends Exercises
         DriftSqlType.string,
         data['${effectivePrefix}instructions'],
       ),
+      isBodyweight: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_bodyweight'],
+      )!,
     );
   }
 
@@ -303,6 +332,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
   final int defaultRestSeconds;
   final String? equipment;
   final String? instructions;
+  final bool isBodyweight;
   const Exercise({
     required this.name,
     required this.bodyPart,
@@ -314,6 +344,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     required this.defaultRestSeconds,
     this.equipment,
     this.instructions,
+    required this.isBodyweight,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -332,6 +363,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     if (!nullToAbsent || instructions != null) {
       map['instructions'] = Variable<String>(instructions);
     }
+    map['is_bodyweight'] = Variable<bool>(isBodyweight);
     return map;
   }
 
@@ -351,6 +383,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
       instructions: instructions == null && nullToAbsent
           ? const Value.absent()
           : Value(instructions),
+      isBodyweight: Value(isBodyweight),
     );
   }
 
@@ -370,6 +403,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
       defaultRestSeconds: serializer.fromJson<int>(json['defaultRestSeconds']),
       equipment: serializer.fromJson<String?>(json['equipment']),
       instructions: serializer.fromJson<String?>(json['instructions']),
+      isBodyweight: serializer.fromJson<bool>(json['isBodyweight']),
     );
   }
   @override
@@ -386,6 +420,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
       'defaultRestSeconds': serializer.toJson<int>(defaultRestSeconds),
       'equipment': serializer.toJson<String?>(equipment),
       'instructions': serializer.toJson<String?>(instructions),
+      'isBodyweight': serializer.toJson<bool>(isBodyweight),
     };
   }
 
@@ -400,6 +435,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     int? defaultRestSeconds,
     Value<String?> equipment = const Value.absent(),
     Value<String?> instructions = const Value.absent(),
+    bool? isBodyweight,
   }) => Exercise(
     name: name ?? this.name,
     bodyPart: bodyPart ?? this.bodyPart,
@@ -411,6 +447,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     defaultRestSeconds: defaultRestSeconds ?? this.defaultRestSeconds,
     equipment: equipment.present ? equipment.value : this.equipment,
     instructions: instructions.present ? instructions.value : this.instructions,
+    isBodyweight: isBodyweight ?? this.isBodyweight,
   );
   Exercise copyWithCompanion(ExercisesCompanion data) {
     return Exercise(
@@ -438,6 +475,9 @@ class Exercise extends DataClass implements Insertable<Exercise> {
       instructions: data.instructions.present
           ? data.instructions.value
           : this.instructions,
+      isBodyweight: data.isBodyweight.present
+          ? data.isBodyweight.value
+          : this.isBodyweight,
     );
   }
 
@@ -453,7 +493,8 @@ class Exercise extends DataClass implements Insertable<Exercise> {
           ..write('defaultReps: $defaultReps, ')
           ..write('defaultRestSeconds: $defaultRestSeconds, ')
           ..write('equipment: $equipment, ')
-          ..write('instructions: $instructions')
+          ..write('instructions: $instructions, ')
+          ..write('isBodyweight: $isBodyweight')
           ..write(')'))
         .toString();
   }
@@ -470,6 +511,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     defaultRestSeconds,
     equipment,
     instructions,
+    isBodyweight,
   );
   @override
   bool operator ==(Object other) =>
@@ -484,7 +526,8 @@ class Exercise extends DataClass implements Insertable<Exercise> {
           other.defaultReps == this.defaultReps &&
           other.defaultRestSeconds == this.defaultRestSeconds &&
           other.equipment == this.equipment &&
-          other.instructions == this.instructions);
+          other.instructions == this.instructions &&
+          other.isBodyweight == this.isBodyweight);
 }
 
 class ExercisesCompanion extends UpdateCompanion<Exercise> {
@@ -498,6 +541,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
   final Value<int> defaultRestSeconds;
   final Value<String?> equipment;
   final Value<String?> instructions;
+  final Value<bool> isBodyweight;
   final Value<int> rowid;
   const ExercisesCompanion({
     this.name = const Value.absent(),
@@ -510,6 +554,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     this.defaultRestSeconds = const Value.absent(),
     this.equipment = const Value.absent(),
     this.instructions = const Value.absent(),
+    this.isBodyweight = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ExercisesCompanion.insert({
@@ -523,6 +568,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     required int defaultRestSeconds,
     this.equipment = const Value.absent(),
     this.instructions = const Value.absent(),
+    this.isBodyweight = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name),
        bodyPart = Value(bodyPart),
@@ -542,6 +588,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     Expression<int>? defaultRestSeconds,
     Expression<String>? equipment,
     Expression<String>? instructions,
+    Expression<bool>? isBodyweight,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -556,6 +603,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
         'default_rest_seconds': defaultRestSeconds,
       if (equipment != null) 'equipment': equipment,
       if (instructions != null) 'instructions': instructions,
+      if (isBodyweight != null) 'is_bodyweight': isBodyweight,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -571,6 +619,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     Value<int>? defaultRestSeconds,
     Value<String?>? equipment,
     Value<String?>? instructions,
+    Value<bool>? isBodyweight,
     Value<int>? rowid,
   }) {
     return ExercisesCompanion(
@@ -584,6 +633,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
       defaultRestSeconds: defaultRestSeconds ?? this.defaultRestSeconds,
       equipment: equipment ?? this.equipment,
       instructions: instructions ?? this.instructions,
+      isBodyweight: isBodyweight ?? this.isBodyweight,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -621,6 +671,9 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     if (instructions.present) {
       map['instructions'] = Variable<String>(instructions.value);
     }
+    if (isBodyweight.present) {
+      map['is_bodyweight'] = Variable<bool>(isBodyweight.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -640,6 +693,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
           ..write('defaultRestSeconds: $defaultRestSeconds, ')
           ..write('equipment: $equipment, ')
           ..write('instructions: $instructions, ')
+          ..write('isBodyweight: $isBodyweight, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1437,6 +1491,7 @@ typedef $$ExercisesTableCreateCompanionBuilder =
       required int defaultRestSeconds,
       Value<String?> equipment,
       Value<String?> instructions,
+      Value<bool> isBodyweight,
       Value<int> rowid,
     });
 typedef $$ExercisesTableUpdateCompanionBuilder =
@@ -1451,6 +1506,7 @@ typedef $$ExercisesTableUpdateCompanionBuilder =
       Value<int> defaultRestSeconds,
       Value<String?> equipment,
       Value<String?> instructions,
+      Value<bool> isBodyweight,
       Value<int> rowid,
     });
 
@@ -1510,6 +1566,11 @@ class $$ExercisesTableFilterComposer
 
   ColumnFilters<String> get instructions => $composableBuilder(
     column: $table.instructions,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isBodyweight => $composableBuilder(
+    column: $table.isBodyweight,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1572,6 +1633,11 @@ class $$ExercisesTableOrderingComposer
     column: $table.instructions,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isBodyweight => $composableBuilder(
+    column: $table.isBodyweight,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ExercisesTableAnnotationComposer
@@ -1626,6 +1692,11 @@ class $$ExercisesTableAnnotationComposer
     column: $table.instructions,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isBodyweight => $composableBuilder(
+    column: $table.isBodyweight,
+    builder: (column) => column,
+  );
 }
 
 class $$ExercisesTableTableManager
@@ -1666,6 +1737,7 @@ class $$ExercisesTableTableManager
                 Value<int> defaultRestSeconds = const Value.absent(),
                 Value<String?> equipment = const Value.absent(),
                 Value<String?> instructions = const Value.absent(),
+                Value<bool> isBodyweight = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ExercisesCompanion(
                 name: name,
@@ -1678,6 +1750,7 @@ class $$ExercisesTableTableManager
                 defaultRestSeconds: defaultRestSeconds,
                 equipment: equipment,
                 instructions: instructions,
+                isBodyweight: isBodyweight,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1692,6 +1765,7 @@ class $$ExercisesTableTableManager
                 required int defaultRestSeconds,
                 Value<String?> equipment = const Value.absent(),
                 Value<String?> instructions = const Value.absent(),
+                Value<bool> isBodyweight = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ExercisesCompanion.insert(
                 name: name,
@@ -1704,6 +1778,7 @@ class $$ExercisesTableTableManager
                 defaultRestSeconds: defaultRestSeconds,
                 equipment: equipment,
                 instructions: instructions,
+                isBodyweight: isBodyweight,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -29,7 +30,10 @@ class WebdavSyncService {
     final client = await _createClient();
     if (client == null) return false;
     try {
-      await client.ping();
+      client.setConnectTimeout(10000);
+      client.setSendTimeout(10000);
+      client.setReceiveTimeout(10000);
+      await client.ping().timeout(const Duration(seconds: 10));
       return true;
     } catch (_) {
       return false;

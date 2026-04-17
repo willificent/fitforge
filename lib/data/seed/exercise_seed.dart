@@ -2,7 +2,39 @@ import 'package:drift/drift.dart';
 
 import 'package:fitforge/data/database/app_database.dart';
 
+const _bodyweightExercises = {
+  'Push-ups', 'Diamond Push-ups', 'Pike Push-ups', 'Pull-ups',
+  'Chin-ups', 'Tricep Dips', 'Bodyweight Squats', 'Lunges',
+  'Plank', 'Crunches', 'Leg Raises', 'Jumping Jacks',
+  'Burpees', 'Mountain Climbers', 'Jump Squats', 'Plyo Lunges',
+  'Superman Hold', 'Wall Sit', 'Bear Crawl', 'Broad Jump',
+  'Clapping Push-ups', 'Hindu Push-ups', 'Archer Push-ups',
+  'Bulgarian Split Squat', 'Side Plank', 'Russian Twist',
+  'V-Up', 'Flutter Kicks', 'Bird Dog', 'Glute Bridge',
+};
+
 List<ExercisesCompanion> buildExerciseSeed() {
+  final raw = _buildRawSeed();
+  return raw.map((e) {
+    final name = e.name.value;
+    final isBodyweight = _bodyweightExercises.contains(name);
+    return ExercisesCompanion(
+      name: e.name,
+      bodyPart: e.bodyPart,
+      isFavorite: e.isFavorite,
+      workoutType: e.workoutType,
+      difficulty: e.difficulty,
+      defaultSets: e.defaultSets,
+      defaultReps: e.defaultReps,
+      defaultRestSeconds: e.defaultRestSeconds,
+      equipment: e.equipment,
+      instructions: e.instructions,
+      isBodyweight: Value(isBodyweight),
+    );
+  }).toList();
+}
+
+List<ExercisesCompanion> _buildRawSeed() {
   return [
     // === STRENGTH - CHEST ===
     ExercisesCompanion.insert(

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:fitforge/core/constants/app_constants.dart';
 import 'package:fitforge/data/database/app_database.dart';
 import 'package:fitforge/domain/generator/progressive_target_calculator.dart';
@@ -35,6 +37,8 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
   bool _restTimerActive = false;
 
   String get _dateKey => widget.date;
+
+  bool get _isBodyweight => widget.exercise.isBodyweight;
 
   @override
   void initState() {
@@ -77,26 +81,32 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
   }
 
   void _prefillFromTarget() {
-    if (_target != null) {
+    if (_isBodyweight) {
+      _weightController.text = '0';
+    } else if (_target != null) {
       _weightController.text = _target!.targetWeight.toStringAsFixed(1);
-      _repsController.text = _target!.targetReps.toString();
     } else {
       _weightController.text = '0';
-      _repsController.text = widget.exercise.defaultReps
-          .split(',')
-          .first
-          .trim();
+    }
+
+    if (_target != null) {
+      _repsController.text = _target!.targetReps.toString();
+    } else {
+      _repsController.text =
+          widget.exercise.defaultReps.split(',').first.trim();
     }
   }
 
   Future<void> _logSet() async {
-    final weight = double.tryParse(_weightController.text) ?? 0;
+    final weight = _isBodyweight
+        ? 0.0
+        : double.tryParse(_weightController.text) ?? 0;
     final reps = double.tryParse(_repsController.text) ?? 0;
     final comment = _commentController.text.isEmpty
         ? null
         : _commentController.text;
 
-    if (weight <= 0 || reps <= 0) {
+    if (reps <= 0 || (!_isBodyweight && weight <= 0)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter valid weight and reps')),
       );
@@ -218,6 +228,10 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/home'),
+        ),
         title: Text(widget.exercise.name),
         actions: [
           if (_restTimerActive)
@@ -310,7 +324,9 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
             if (_target != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Target: ${_target!.targetWeight.toStringAsFixed(1)} x ${_target!.targetReps}',
+                _isBodyweight
+                    ? 'Target: ${_target!.targetReps} reps'
+                    : 'Target: ${_target!.targetWeight.toStringAsFixed(1)} x ${_target!.targetReps}',
                 style: tt.bodyMedium?.copyWith(color: cs.primary),
               ),
             ],
@@ -354,7 +370,9 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
               title: Row(
                 children: [
                   Text(
-                    '${set.weight} x ${set.reps.toInt()}',
+                    _isBodyweight
+                        ? 'x ${set.reps.toInt()}'
+                        : '${set.weight} x ${set.reps.toInt()}',
                     style: tt.bodyMedium?.copyWith(
                       fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
                     ),
@@ -410,30 +428,33 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                'Target: ${_target!.targetWeight.toStringAsFixed(1)} $unit x ${_target!.targetReps} reps',
+                _isBodyweight
+                    ? 'Target: ${_target!.targetReps} reps'
+                    : 'Target: ${_target!.targetWeight.toStringAsFixed(1)} $unit x ${_target!.targetReps} reps',
                 style: tt.bodySmall?.copyWith(color: cs.primary),
               ),
             ),
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _weightController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Weight ($unit)',
-                    isDense: true,
-                    border: const OutlineInputBorder(),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+              if (!_isBodyweight)
+                Expanded(
+                  child: TextField(
+                    controller: _weightController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Weight ($unit)',
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
+              if (!_isBodyweight) const SizedBox(width: 8),
               Expanded(
                 child: TextField(
                   controller: _repsController,

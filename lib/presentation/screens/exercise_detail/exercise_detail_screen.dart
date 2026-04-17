@@ -25,6 +25,10 @@ class ExerciseDetailScreen extends ConsumerWidget {
         title: Text(exercise.name),
         actions: [
           IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () => _showEditDialog(context, ref),
+          ),
+          IconButton(
             icon: Icon(
               exercise.isFavorite ? Icons.favorite : Icons.favorite_border,
               color: exercise.isFavorite ? cs.primary : null,
@@ -325,5 +329,81 @@ class ExerciseDetailScreen extends ConsumerWidget {
       'advanced' => Colors.red,
       _ => cs.outline,
     };
+  }
+
+  void _showEditDialog(BuildContext context, WidgetRef ref) {
+    final setsController = TextEditingController(text: exercise.defaultSets.toString());
+    final repsController = TextEditingController(text: exercise.defaultReps);
+    final restController = TextEditingController(text: exercise.defaultRestSeconds.toString());
+    final equipmentController = TextEditingController(text: exercise.equipment ?? '');
+    final instructionsController = TextEditingController(text: exercise.instructions ?? '');
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit ${exercise.name}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: setsController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Default Sets'),
+              ),
+              TextField(
+                controller: repsController,
+                decoration: const InputDecoration(
+                  labelText: 'Default Reps (comma-separated)',
+                ),
+              ),
+              TextField(
+                controller: restController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Rest (seconds)'),
+              ),
+              TextField(
+                controller: equipmentController,
+                decoration: const InputDecoration(labelText: 'Equipment'),
+              ),
+              TextField(
+                controller: instructionsController,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Instructions'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final repo = ref.read(exerciseRepositoryProvider);
+              await repo.addCustomExercise(
+                name: exercise.name,
+                bodyPart: exercise.bodyPart,
+                workoutType: exercise.workoutType,
+                difficulty: exercise.difficulty,
+                defaultSets: int.tryParse(setsController.text) ?? exercise.defaultSets,
+                defaultReps: repsController.text,
+                defaultRestSeconds: int.tryParse(restController.text) ?? exercise.defaultRestSeconds,
+                equipment: equipmentController.text.isEmpty ? null : equipmentController.text,
+                instructions: instructionsController.text.isEmpty ? null : instructionsController.text,
+              );
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Exercise updated')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 }

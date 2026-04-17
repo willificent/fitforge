@@ -11,6 +11,8 @@ class Exercises extends Table {
   IntColumn get defaultRestSeconds => integer()();
   TextColumn get equipment => text().nullable()();
   TextColumn get instructions => text().nullable()();
+  BoolColumn get isBodyweight =>
+      boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {name};

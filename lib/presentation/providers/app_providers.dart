@@ -58,3 +58,5 @@ final themeModeProvider = FutureProvider<ThemeMode>((ref) async {
 final webdavSyncProvider = Provider<WebdavSyncService>((ref) {
   return WebdavSyncService(ref.read(settingsRepositoryProvider));
 });
+
+final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());

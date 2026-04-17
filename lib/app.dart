@@ -3,9 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:fitforge/data/database/app_database.dart';
 import 'package:fitforge/domain/models/workout_generation_request.dart';
 import 'package:fitforge/presentation/screens/home/home_screen.dart';
+import 'package:fitforge/presentation/screens/workout/workout_tab_screen.dart';
+import 'package:fitforge/presentation/screens/generate_workout/generate_workout_screen.dart';
 import 'package:fitforge/presentation/screens/exercise_browser/exercise_browser_screen.dart';
 import 'package:fitforge/presentation/screens/exercise_detail/exercise_detail_screen.dart';
-import 'package:fitforge/presentation/screens/generate_workout/generate_workout_screen.dart';
 import 'package:fitforge/presentation/screens/history/history_shell.dart';
 import 'package:fitforge/presentation/screens/settings/settings_screen.dart';
 import 'package:fitforge/presentation/screens/log_workout/workout_log_screen.dart';
@@ -34,8 +35,8 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/exercises',
-              builder: (context, state) => const ExerciseBrowserScreen(),
+              path: '/workout',
+              builder: (context, state) => const WorkoutTabScreen(),
             ),
           ],
         ),
@@ -44,6 +45,14 @@ final router = GoRouter(
             GoRoute(
               path: '/generate',
               builder: (context, state) => const GenerateWorkoutScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/exercises',
+              builder: (context, state) => const ExerciseBrowserScreen(),
             ),
           ],
         ),
@@ -119,12 +128,16 @@ class ScaffoldWithNavBar extends StatelessWidget {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(
-            icon: Icon(Icons.fitness_center),
-            label: 'Exercises',
+            icon: Icon(Icons.assignment),
+            label: 'Workout',
           ),
           NavigationDestination(
             icon: Icon(Icons.auto_awesome),
             label: 'Generate',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.fitness_center),
+            label: 'Exercises',
           ),
           NavigationDestination(icon: Icon(Icons.bar_chart), label: 'History'),
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),

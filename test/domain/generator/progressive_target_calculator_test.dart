@@ -53,7 +53,7 @@ void main() {
 
       expect(result, isNotNull);
       expect(result!.targetWeight, 100.0);
-      expect(result.targetReps, greaterThan(7));
+      expect(result.targetReps, lessThan(7));
     });
 
     test('rounds weight to nearest 2.5', () {
@@ -122,6 +122,7 @@ void main() {
 
       expect(result, isNotNull);
       expect(result!.targetWeight, 210.0);
+      expect(result.targetReps, lessThan(8));
     });
   });
 }

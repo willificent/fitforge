@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:fitforge/domain/models/workout_generation_request.dart';
 import 'package:fitforge/domain/generator/progressive_target_calculator.dart';
@@ -21,6 +22,11 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
   List<MuscleGroup> _selectedMuscles = [];
   GeneratedWorkout? _generatedWorkout;
   bool _isGenerating = false;
+  DateTime _selectedDate = DateTime.now();
+
+  String get _dateKey {
+    return '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +40,10 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildSectionTitle('Date', tt),
+            const SizedBox(height: 8),
+            _buildDateSelector(cs, tt),
+            const SizedBox(height: 16),
             _buildSectionTitle('Workout Type', tt),
             const SizedBox(height: 8),
             _buildChipRow(
@@ -78,22 +88,7 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
               const SizedBox(height: 16),
               _buildExerciseList(cs, tt),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _startWorkout,
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('Start Workout'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: _regenerate,
-                  child: const Text('Regenerate'),
-                ),
-              ),
+              _buildPostGenerationActions(cs, tt),
             ],
           ],
         ),
@@ -105,6 +100,48 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
     return Text(title, style: tt.titleMedium);
   }
 
+  Widget _buildDateSelector(ColorScheme cs, TextTheme tt) {
+    final isToday = _isSameDay(_selectedDate, DateTime.now());
+    final label = isToday
+        ? 'Today'
+        : DateFormat('EEE, MMM d, yyyy').format(_selectedDate);
+
+    return InkWell(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: _selectedDate,
+          firstDate: DateTime.now().subtract(const Duration(days: 365)),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
+        );
+        if (picked != null) {
+          setState(() => _selectedDate = picked);
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: cs.outline),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, color: cs.primary, size: 20),
+            const SizedBox(width: 8),
+            Text(label, style: tt.bodyLarge),
+            const Spacer(),
+            Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   Widget _buildChipRow<T>({
     required List<T> options,
     required T selected,
@@ -114,10 +151,9 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
     return Wrap(
       spacing: 8,
       children: options.map((option) {
-        final isSelected = option == selected;
         return ChoiceChip(
           label: Text(labelBuilder(option)),
-          selected: isSelected,
+          selected: option == selected,
           onSelected: (_) => onSelected(option),
         );
       }).toList(),
@@ -198,9 +234,9 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
             ),
             title: Text(ex.name),
             subtitle: Text(
-              '${ex.defaultSets} sets • ${ex.defaultReps.join(', ')} reps • ${_muscleGroupLabel(ex.muscleGroup)}',
+              '${ex.defaultSets} sets x ${ex.defaultReps.join(", ")} reps',
             ),
-            trailing: ex.targetWeight != null
+            trailing: ex.targetWeight != null && ex.targetWeight! > 0
                 ? Text(
                     '${ex.targetWeight!.toStringAsFixed(1)} x ${ex.targetReps}',
                     style: tt.bodySmall?.copyWith(
@@ -212,6 +248,64 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildPostGenerationActions(ColorScheme cs, TextTheme tt) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          onPressed: _addToCalendarAndStart,
+          icon: const Icon(Icons.play_arrow),
+          label: const Text('Start Workout'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _addToCalendarAndView,
+          icon: const Icon(Icons.calendar_today),
+          label: const Text('Add to Calendar'),
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: _regenerate,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Create Another Workout'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _addToCalendarAndStart() async {
+    await _addExercisesToCalendar();
+    if (mounted) {
+      ref.read(selectedDateProvider.notifier).state = _selectedDate;
+      context.go('/workout');
+    }
+  }
+
+  Future<void> _addToCalendarAndView() async {
+    await _addExercisesToCalendar();
+    if (mounted) {
+      ref.read(selectedDateProvider.notifier).state = _selectedDate;
+      context.go('/workout');
+    }
+  }
+
+  Future<void> _addExercisesToCalendar() async {
+    final repo = ref.read(workoutRepositoryProvider);
+    final exercises = _generatedWorkout!.exercises.map((ex) {
+      return (
+        name: ex.name,
+        bodyPart: _muscleGroupLabel(ex.muscleGroup),
+        sets: ex.defaultSets,
+        reps: ex.defaultReps.join(', '),
+      );
+    }).toList();
+
+    await repo.addPlannedExercises(
+      date: _dateKey,
+      exercises: exercises,
     );
   }
 
@@ -257,11 +351,18 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
     } catch (e) {
       setState(() => _isGenerating = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error generating workout: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error generating workout: $e')),
+        );
       }
     }
+  }
+
+  void _regenerate() {
+    setState(() {
+      _generatedWorkout = null;
+    });
+    _generate();
   }
 
   String _workoutTypeLabel(WorkoutType t) {
@@ -292,23 +393,5 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
       MuscleGroup.core => 'Core',
       MuscleGroup.fullBody => 'Full Body',
     };
-  }
-
-  void _startWorkout() {
-    if (_generatedWorkout == null) return;
-    final now = DateTime.now();
-    final dateKey =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    context.go(
-      '/workout-session',
-      extra: {'workout': _generatedWorkout, 'date': dateKey},
-    );
-  }
-
-  void _regenerate() {
-    setState(() {
-      _generatedWorkout = null;
-    });
-    _generate();
   }
 }

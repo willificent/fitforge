@@ -74,4 +74,24 @@ class WorkoutRepository {
   }
 
   Future<void> deleteSet(int id) => _dao.deleteSet(id);
+
+  Future<void> addPlannedExercises({
+    required String date,
+    required List<({String name, String bodyPart, int sets, String reps})> exercises,
+  }) async {
+    for (final ex in exercises) {
+      final repsList = ex.reps.split(',').map((r) => r.trim()).toList();
+      for (int i = 0; i < ex.sets; i++) {
+        final rep = i < repsList.length ? repsList[i] : repsList.last;
+        await logSet(
+          date: date,
+          exerciseName: ex.name,
+          bodyPart: ex.bodyPart,
+          weight: 0,
+          reps: double.tryParse(rep) ?? 0,
+          comment: 'planned',
+        );
+      }
+    }
+  }
 }

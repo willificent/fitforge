@@ -40,7 +40,7 @@ class ProgressiveTargetCalculator {
     } else {
       return TargetResult(
         targetWeight: avgWeight,
-        targetReps: (avgReps + repIncreaseStep).toInt().clamp(
+        targetReps: (avgReps - repIncreaseStep).toInt().clamp(
           AppConstants.minReps,
           AppConstants.maxReps,
         ),
@@ -60,8 +60,8 @@ class ProgressiveTargetCalculator {
     final avgReps = last.reps;
 
     return TargetResult(
-      targetWeight: _roundToNearest(avgWeight * (1 + weightIncreaseRate)),
-      targetReps: (avgReps + repIncreaseStep).toInt().clamp(
+      targetWeight: avgWeight,
+      targetReps: (avgReps - repIncreaseStep).toInt().clamp(
         AppConstants.minReps,
         AppConstants.maxReps,
       ),

@@ -16,12 +16,12 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late PageController _pageController;
   static const int _initialPage = 365 * 5;
-  late DateTime _selectedDate;
+
+  DateTime get _selectedDate => ref.read(selectedDateProvider);
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now();
     _pageController = PageController(initialPage: _initialPage);
     ref.read(exerciseSeedProvider);
   }
@@ -73,7 +73,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               controller: _pageController,
               onPageChanged: (index) {
                 setState(() {
-                  _selectedDate = _getDateFromPageIndex(index);
+                  ref.read(selectedDateProvider.notifier).state =
+                      _getDateFromPageIndex(index);
                 });
               },
               itemBuilder: (context, index) {
@@ -84,9 +85,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddExerciseSheet(context),
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'add',
+            onPressed: () => _showAddExerciseSheet(context),
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: 'start',
+            onPressed: () => context.go('/workout'),
+            child: const Icon(Icons.play_arrow),
+          ),
+        ],
       ),
     );
   }
@@ -112,7 +125,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           return GestureDetector(
             onTap: () {
-              setState(() => _selectedDate = date);
+              ref.read(selectedDateProvider.notifier).state = date;
+              setState(() {});
               _pageController.animateToPage(
                 _getPageIndexFromDate(date),
                 duration: const Duration(milliseconds: 300),
@@ -309,11 +323,18 @@ class _ExerciseCard extends ConsumerWidget {
                     ),
                     Expanded(
                       child: Text(
-                        '${set.weight} x ${set.reps}',
-                        style: const TextStyle(fontSize: 14),
+                        set.weight == 0
+                            ? 'x ${set.reps.toInt()}'
+                            : '${set.weight} x ${set.reps.toInt()}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: set.comment == 'planned'
+                              ? cs.outline
+                              : null,
+                        ),
                       ),
                     ),
-                    if (set.comment != null)
+                    if (set.comment != null && set.comment != 'planned')
                       Text(
                         set.comment!,
                         style: TextStyle(
