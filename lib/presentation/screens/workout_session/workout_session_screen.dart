@@ -152,10 +152,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
+                height: 56,
                 child: FilledButton.icon(
                   onPressed: () => _navigateToLogScreen(dbExercise),
-                  icon: const Icon(Icons.fitness_center),
-                  label: const Text('Log This Exercise'),
+                  icon: const Icon(Icons.play_arrow, size: 28),
+                  label: const Text('Start Exercise', style: TextStyle(fontSize: 18)),
                 ),
               ),
               const SizedBox(height: 8),
@@ -377,15 +378,15 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
-              onPressed: () => context.go('/home'),
-              icon: const Icon(Icons.home),
-              label: const Text('Go Home'),
+              onPressed: () => context.go('/workout'),
+              icon: const Icon(Icons.assignment),
+              label: const Text('Back to Workout'),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => context.go('/history'),
-              icon: const Icon(Icons.bar_chart),
-              label: const Text('View History'),
+              onPressed: () => context.go('/home'),
+              icon: const Icon(Icons.home),
+              label: const Text('Go Home'),
             ),
           ],
         ),
@@ -439,7 +440,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              context.go('/home');
+              context.go('/workout');
             },
             child: const Text('Exit'),
           ),

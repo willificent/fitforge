@@ -9,5 +9,6 @@ class WorkoutSets extends Table {
   RealColumn get reps => real()();
   TextColumn get comment => text().nullable()();
   IntColumn get restSeconds => integer().nullable()();
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

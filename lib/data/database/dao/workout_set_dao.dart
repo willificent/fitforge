@@ -10,11 +10,21 @@ class WorkoutSetDao extends DatabaseAccessor<AppDatabase>
   WorkoutSetDao(super.db);
 
   Stream<List<WorkoutSet>> watchSetsForDate(String date) {
-    return (select(workoutSets)..where((t) => t.date.equals(date))).watch();
+    return (select(workoutSets)
+      ..where((t) => t.date.equals(date))
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.displayOrder),
+        (t) => OrderingTerm.asc(t.id),
+      ])).watch();
   }
 
   Future<List<WorkoutSet>> getSetsForDate(String date) {
-    return (select(workoutSets)..where((t) => t.date.equals(date))).get();
+    return (select(workoutSets)
+      ..where((t) => t.date.equals(date))
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.displayOrder),
+        (t) => OrderingTerm.asc(t.id),
+      ])).get();
   }
 
   Stream<List<WorkoutSet>> watchSetsForExercise(String exerciseName) {
@@ -70,6 +80,16 @@ class WorkoutSetDao extends DatabaseAccessor<AppDatabase>
     return (update(
       workoutSets,
     )..where((t) => t.id.equals(entry.id.value))).write(entry);
+  }
+
+  Future<void> updateDisplayOrders(List<({int id, int order})> updates) {
+    return transaction(() async {
+      for (final u in updates) {
+        await (update(workoutSets)..where((t) => t.id.equals(u.id))).write(
+          WorkoutSetsCompanion(displayOrder: Value(u.order)),
+        );
+      }
+    });
   }
 
   Future<int> deleteSet(int id) {

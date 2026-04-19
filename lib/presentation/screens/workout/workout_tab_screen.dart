@@ -26,14 +26,27 @@ class _WorkoutTabScreenState extends ConsumerState<WorkoutTabScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(DateFormat('EEEE, MMM d').format(selectedDate)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.play_arrow),
-            tooltip: 'Start Workout',
-            onPressed: () => _startWorkout(context, dateKey),
+        title: InkWell(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: selectedDate,
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+            );
+            if (picked != null) {
+              ref.read(selectedDateProvider.notifier).state = picked;
+            }
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(DateFormat('EEEE, MMM d').format(selectedDate)),
+              const SizedBox(width: 4),
+              Icon(Icons.calendar_today, size: 18, color: cs.primary),
+            ],
           ),
-        ],
+        ),
       ),
       body: StreamBuilder<List<WorkoutSet>>(
         stream: workoutRepo.watchSetsForDate(dateKey),
@@ -105,11 +118,7 @@ class _WorkoutTabScreenState extends ConsumerState<WorkoutTabScreen> {
                 child: ReorderableListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (oldIndex < newIndex) newIndex--;
-                      final item = exerciseNames.removeAt(oldIndex);
-                      exerciseNames.insert(newIndex, item);
-                    });
+                    _persistReorder(exerciseNames, oldIndex, newIndex);
                   },
                   children: [
                     for (var i = 0; i < exerciseNames.length; i++)
@@ -139,6 +148,31 @@ class _WorkoutTabScreenState extends ConsumerState<WorkoutTabScreen> {
         },
       ),
     );
+  }
+
+  void _persistReorder(
+    List<String> exerciseNames,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    if (oldIndex < newIndex) newIndex--;
+    final item = exerciseNames.removeAt(oldIndex);
+    exerciseNames.insert(newIndex, item);
+
+    final repo = ref.read(workoutRepositoryProvider);
+    final dateKey =
+        '${ref.read(selectedDateProvider).year}-${ref.read(selectedDateProvider).month.toString().padLeft(2, '0')}-${ref.read(selectedDateProvider).day.toString().padLeft(2, '0')}';
+    final allSets = await repo.getSetsForDate(dateKey);
+
+    final updates = <({int id, int order})>[];
+    for (var i = 0; i < exerciseNames.length; i++) {
+      final name = exerciseNames[i];
+      final exerciseSets = allSets.where((s) => s.exerciseName == name);
+      for (final set in exerciseSets) {
+        updates.add((id: set.id, order: i * 100 + set.id));
+      }
+    }
+    await repo.reorderExercises(updates);
   }
 
   void _startWorkout(BuildContext context, String dateKey) async {
@@ -253,8 +287,6 @@ class _ExerciseSectionCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.drag_handle, color: cs.onSurfaceVariant, size: 20),
-                const SizedBox(width: 4),
                 Expanded(
                   child: InkWell(
                     onTap: () async {
@@ -308,24 +340,6 @@ class _ExerciseSectionCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      if (isPlanned)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: cs.tertiaryContainer,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'planned',
-                            style: tt.labelSmall?.copyWith(
-                              color: cs.onTertiaryContainer,
-                            ),
-                          ),
-                        ),
-                      Icon(Icons.edit, size: 14, color: cs.onSurfaceVariant),
                     ],
                   ),
                 ),
@@ -341,8 +355,8 @@ class _ExerciseSectionCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 TextButton(
-                  onPressed: () => _logExercise(context, ref),
-                  child: const Text('Log'),
+                  onPressed: () => _editExercise(context, ref),
+                  child: const Text('Edit'),
                 ),
               ],
             ),
@@ -365,7 +379,7 @@ class _ExerciseSectionCard extends ConsumerWidget {
 
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Edit Set'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -384,7 +398,16 @@ class _ExerciseSectionCard extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () async {
+              final repo = ref.read(workoutRepositoryProvider);
+              await repo.deleteSet(set.id);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Delete'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
@@ -400,7 +423,7 @@ class _ExerciseSectionCard extends ConsumerWidget {
                     ? null
                     : set.comment,
               );
-              if (context.mounted) Navigator.pop(context);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
             },
             child: const Text('Save'),
           ),
@@ -427,13 +450,13 @@ class _ExerciseSectionCard extends ConsumerWidget {
     );
   }
 
-  void _logExercise(BuildContext context, WidgetRef ref) async {
+  void _editExercise(BuildContext context, WidgetRef ref) async {
     final ex = await ref
         .read(exerciseRepositoryProvider)
         .getByName(exerciseName);
     if (ex == null || !context.mounted) return;
 
-    context.go('/log-workout', extra: {'exercise': ex, 'date': dateKey});
+    context.go('/log-workout', extra: {'exercise': ex, 'date': dateKey, 'returnPath': '/workout'});
   }
 }
 

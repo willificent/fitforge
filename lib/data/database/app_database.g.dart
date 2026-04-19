@@ -790,6 +790,18 @@ class $WorkoutSetsTable extends WorkoutSets
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -812,6 +824,7 @@ class $WorkoutSetsTable extends WorkoutSets
     reps,
     comment,
     restSeconds,
+    displayOrder,
     createdAt,
   ];
   @override
@@ -887,6 +900,15 @@ class $WorkoutSetsTable extends WorkoutSets
         ),
       );
     }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -934,6 +956,10 @@ class $WorkoutSetsTable extends WorkoutSets
         DriftSqlType.int,
         data['${effectivePrefix}rest_seconds'],
       ),
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -956,6 +982,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
   final double reps;
   final String? comment;
   final int? restSeconds;
+  final int displayOrder;
   final DateTime createdAt;
   const WorkoutSet({
     required this.id,
@@ -966,6 +993,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     required this.reps,
     this.comment,
     this.restSeconds,
+    required this.displayOrder,
     required this.createdAt,
   });
   @override
@@ -983,6 +1011,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     if (!nullToAbsent || restSeconds != null) {
       map['rest_seconds'] = Variable<int>(restSeconds);
     }
+    map['display_order'] = Variable<int>(displayOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -1001,6 +1030,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       restSeconds: restSeconds == null && nullToAbsent
           ? const Value.absent()
           : Value(restSeconds),
+      displayOrder: Value(displayOrder),
       createdAt: Value(createdAt),
     );
   }
@@ -1019,6 +1049,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       reps: serializer.fromJson<double>(json['reps']),
       comment: serializer.fromJson<String?>(json['comment']),
       restSeconds: serializer.fromJson<int?>(json['restSeconds']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1034,6 +1065,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       'reps': serializer.toJson<double>(reps),
       'comment': serializer.toJson<String?>(comment),
       'restSeconds': serializer.toJson<int?>(restSeconds),
+      'displayOrder': serializer.toJson<int>(displayOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -1047,6 +1079,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     double? reps,
     Value<String?> comment = const Value.absent(),
     Value<int?> restSeconds = const Value.absent(),
+    int? displayOrder,
     DateTime? createdAt,
   }) => WorkoutSet(
     id: id ?? this.id,
@@ -1057,6 +1090,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     reps: reps ?? this.reps,
     comment: comment.present ? comment.value : this.comment,
     restSeconds: restSeconds.present ? restSeconds.value : this.restSeconds,
+    displayOrder: displayOrder ?? this.displayOrder,
     createdAt: createdAt ?? this.createdAt,
   );
   WorkoutSet copyWithCompanion(WorkoutSetsCompanion data) {
@@ -1073,6 +1107,9 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       restSeconds: data.restSeconds.present
           ? data.restSeconds.value
           : this.restSeconds,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1088,6 +1125,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
           ..write('reps: $reps, ')
           ..write('comment: $comment, ')
           ..write('restSeconds: $restSeconds, ')
+          ..write('displayOrder: $displayOrder, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1103,6 +1141,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     reps,
     comment,
     restSeconds,
+    displayOrder,
     createdAt,
   );
   @override
@@ -1117,6 +1156,7 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
           other.reps == this.reps &&
           other.comment == this.comment &&
           other.restSeconds == this.restSeconds &&
+          other.displayOrder == this.displayOrder &&
           other.createdAt == this.createdAt);
 }
 
@@ -1129,6 +1169,7 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
   final Value<double> reps;
   final Value<String?> comment;
   final Value<int?> restSeconds;
+  final Value<int> displayOrder;
   final Value<DateTime> createdAt;
   const WorkoutSetsCompanion({
     this.id = const Value.absent(),
@@ -1139,6 +1180,7 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
     this.reps = const Value.absent(),
     this.comment = const Value.absent(),
     this.restSeconds = const Value.absent(),
+    this.displayOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   WorkoutSetsCompanion.insert({
@@ -1150,6 +1192,7 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
     required double reps,
     this.comment = const Value.absent(),
     this.restSeconds = const Value.absent(),
+    this.displayOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : date = Value(date),
        exerciseName = Value(exerciseName),
@@ -1165,6 +1208,7 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
     Expression<double>? reps,
     Expression<String>? comment,
     Expression<int>? restSeconds,
+    Expression<int>? displayOrder,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -1176,6 +1220,7 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
       if (reps != null) 'reps': reps,
       if (comment != null) 'comment': comment,
       if (restSeconds != null) 'rest_seconds': restSeconds,
+      if (displayOrder != null) 'display_order': displayOrder,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -1189,6 +1234,7 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
     Value<double>? reps,
     Value<String?>? comment,
     Value<int?>? restSeconds,
+    Value<int>? displayOrder,
     Value<DateTime>? createdAt,
   }) {
     return WorkoutSetsCompanion(
@@ -1200,6 +1246,7 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
       reps: reps ?? this.reps,
       comment: comment ?? this.comment,
       restSeconds: restSeconds ?? this.restSeconds,
+      displayOrder: displayOrder ?? this.displayOrder,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -1231,6 +1278,9 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
     if (restSeconds.present) {
       map['rest_seconds'] = Variable<int>(restSeconds.value);
     }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1248,6 +1298,7 @@ class WorkoutSetsCompanion extends UpdateCompanion<WorkoutSet> {
           ..write('reps: $reps, ')
           ..write('comment: $comment, ')
           ..write('restSeconds: $restSeconds, ')
+          ..write('displayOrder: $displayOrder, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1813,6 +1864,7 @@ typedef $$WorkoutSetsTableCreateCompanionBuilder =
       required double reps,
       Value<String?> comment,
       Value<int?> restSeconds,
+      Value<int> displayOrder,
       Value<DateTime> createdAt,
     });
 typedef $$WorkoutSetsTableUpdateCompanionBuilder =
@@ -1825,6 +1877,7 @@ typedef $$WorkoutSetsTableUpdateCompanionBuilder =
       Value<double> reps,
       Value<String?> comment,
       Value<int?> restSeconds,
+      Value<int> displayOrder,
       Value<DateTime> createdAt,
     });
 
@@ -1874,6 +1927,11 @@ class $$WorkoutSetsTableFilterComposer
 
   ColumnFilters<int> get restSeconds => $composableBuilder(
     column: $table.restSeconds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1932,6 +1990,11 @@ class $$WorkoutSetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -1972,6 +2035,11 @@ class $$WorkoutSetsTableAnnotationComposer
 
   GeneratedColumn<int> get restSeconds => $composableBuilder(
     column: $table.restSeconds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
     builder: (column) => column,
   );
 
@@ -2018,6 +2086,7 @@ class $$WorkoutSetsTableTableManager
                 Value<double> reps = const Value.absent(),
                 Value<String?> comment = const Value.absent(),
                 Value<int?> restSeconds = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => WorkoutSetsCompanion(
                 id: id,
@@ -2028,6 +2097,7 @@ class $$WorkoutSetsTableTableManager
                 reps: reps,
                 comment: comment,
                 restSeconds: restSeconds,
+                displayOrder: displayOrder,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -2040,6 +2110,7 @@ class $$WorkoutSetsTableTableManager
                 required double reps,
                 Value<String?> comment = const Value.absent(),
                 Value<int?> restSeconds = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => WorkoutSetsCompanion.insert(
                 id: id,
@@ -2050,6 +2121,7 @@ class $$WorkoutSetsTableTableManager
                 reps: reps,
                 comment: comment,
                 restSeconds: restSeconds,
+                displayOrder: displayOrder,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0

@@ -13,11 +13,13 @@ import 'package:fitforge/presentation/providers/app_providers.dart';
 class WorkoutLogScreen extends ConsumerStatefulWidget {
   final Exercise exercise;
   final String date;
+  final String? returnPath;
 
   const WorkoutLogScreen({
     super.key,
     required this.exercise,
     required this.date,
+    this.returnPath,
   });
 
   @override
@@ -230,7 +232,7 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/home'),
+          onPressed: () => context.go(widget.returnPath ?? '/workout'),
         ),
         title: Text(widget.exercise.name),
         actions: [
@@ -392,9 +394,19 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
                   ],
                 ],
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.edit, size: 18),
-                onPressed: () => _editSet(set),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 18),
+                    onPressed: () => _editSet(set),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(Icons.close, size: 18, color: cs.error),
+                    onPressed: () => _deleteSet(set.id),
+                  ),
+                ],
               ),
             ),
           ),

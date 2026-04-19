@@ -75,6 +75,10 @@ class WorkoutRepository {
 
   Future<void> deleteSet(int id) => _dao.deleteSet(id);
 
+  Future<void> reorderExercises(List<({int id, int order})> updates) {
+    return _dao.updateDisplayOrders(updates);
+  }
+
   Future<void> addPlannedExercises({
     required String date,
     required List<({String name, String bodyPart, int sets, String reps})> exercises,

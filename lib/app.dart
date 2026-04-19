@@ -83,6 +83,7 @@ final router = GoRouter(
         return WorkoutLogScreen(
           exercise: extra['exercise'] as Exercise,
           date: extra['date'] as String,
+          returnPath: extra['returnPath'] as String?,
         );
       },
     ),
