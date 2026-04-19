@@ -70,7 +70,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('FitForge'),
-            subtitle: const Text('v0.2.0'),
+            subtitle: const Text('v0.1.0'),
           ),
         ],
       ),
