@@ -92,87 +92,90 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           );
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProgressBar(cs, tt),
-              const SizedBox(height: 24),
-              _buildExerciseHeader(exercise, cs, tt),
-              const SizedBox(height: 16),
-              if (exercise.instructions != null) ...[
-                _buildInstructions(exercise, cs, tt),
+        return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildProgressBar(cs, tt),
+                const SizedBox(height: 24),
+                _buildExerciseHeader(exercise, cs, tt),
                 const SizedBox(height: 16),
-              ],
-              if (exercise.equipment != null) ...[
+                if (exercise.instructions != null) ...[
+                  _buildInstructions(exercise, cs, tt),
+                  const SizedBox(height: 16),
+                ],
+                if (exercise.equipment != null) ...[
+                  _buildInfoRow(
+                    Icons.fitness_center,
+                    'Equipment',
+                    exercise.equipment!,
+                    cs,
+                    tt,
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 _buildInfoRow(
-                  Icons.fitness_center,
-                  'Equipment',
-                  exercise.equipment!,
+                  Icons.repeat,
+                  'Sets',
+                  '${exercise.defaultSets} sets',
                   cs,
                   tt,
                 ),
                 const SizedBox(height: 8),
-              ],
-              _buildInfoRow(
-                Icons.repeat,
-                'Sets',
-                '${exercise.defaultSets} sets',
-                cs,
-                tt,
-              ),
-              const SizedBox(height: 8),
-              _buildInfoRow(
-                Icons.format_list_numbered,
-                'Reps',
-                exercise.defaultReps.join(', '),
-                cs,
-                tt,
-              ),
-              const SizedBox(height: 8),
-              _buildInfoRow(
-                Icons.timer,
-                'Rest',
-                '${exercise.defaultRestSeconds}s between sets',
-                cs,
-                tt,
-              ),
-              if (exercise.targetWeight != null) ...[
-                const SizedBox(height: 8),
                 _buildInfoRow(
-                  Icons.trending_up,
-                  'Target',
-                  '${exercise.targetWeight!.toStringAsFixed(1)} x ${exercise.targetReps} reps',
+                  Icons.format_list_numbered,
+                  'Reps',
+                  exercise.defaultReps.join(', '),
                   cs,
                   tt,
-                  isHighlight: true,
                 ),
-              ],
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton.icon(
-                  onPressed: () => _navigateToLogScreen(dbExercise),
-                  icon: const Icon(Icons.play_arrow, size: 28),
-                  label: const Text('Start Exercise', style: TextStyle(fontSize: 18)),
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  Icons.timer,
+                  'Rest',
+                  '${exercise.defaultRestSeconds}s between sets',
+                  cs,
+                  tt,
                 ),
-              ),
-              const SizedBox(height: 8),
-              if (!_isLastExercise)
+                if (exercise.targetWeight != null) ...[
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                    Icons.trending_up,
+                    'Target',
+                    '${exercise.targetWeight!.toStringAsFixed(1)} x ${exercise.targetReps} reps',
+                    cs,
+                    tt,
+                    isHighlight: true,
+                  ),
+                ],
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _skipToNext,
-                    child: const Text('Skip This Exercise'),
+                  height: 56,
+                  child: FilledButton.icon(
+                    onPressed: () => _navigateToLogScreen(dbExercise),
+                    icon: const Icon(Icons.play_arrow, size: 28),
+                    label: const Text('Start Exercise', style: TextStyle(fontSize: 18)),
                   ),
                 ),
-              if (_completedExercises.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                _buildCompletedList(cs, tt),
+                const SizedBox(height: 8),
+                if (!_isLastExercise)
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _skipToNext,
+                      child: const Text('Skip This Exercise'),
+                    ),
+                  ),
+                if (_completedExercises.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _buildCompletedList(cs, tt),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },

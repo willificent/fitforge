@@ -24,8 +24,30 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
   bool _isGenerating = false;
   DateTime _selectedDate = DateTime.now();
 
+  final _scrollController = ScrollController();
+  final _resultsKey = GlobalKey();
+
   String get _dateKey {
     return '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToResults() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _resultsKey.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   @override
@@ -36,6 +58,7 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Generate Workout')),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,43 +68,47 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
             _buildDateSelector(cs, tt),
             const SizedBox(height: 16),
             _buildSectionTitle('Workout Type', tt),
-            const SizedBox(height: 8),
-            _buildChipRow(
-              options: WorkoutType.values,
-              selected: _selectedType,
-              labelBuilder: (t) => _workoutTypeLabel(t),
-              onSelected: (t) => setState(() => _selectedType = t),
+            const SizedBox(height: 4),
+            _buildDropdown<WorkoutType>(
+              value: _selectedType,
+              items: WorkoutType.values,
+              labelBuilder: _workoutTypeLabel,
+              onChanged: (v) => setState(() => _selectedType = v),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             _buildSectionTitle('Difficulty', tt),
-            const SizedBox(height: 8),
-            _buildChipRow(
-              options: DifficultyLevel.values,
-              selected: _selectedDifficulty,
-              labelBuilder: (d) => _difficultyLabel(d),
-              onSelected: (d) => setState(() => _selectedDifficulty = d),
+            const SizedBox(height: 4),
+            _buildDropdown<DifficultyLevel>(
+              value: _selectedDifficulty,
+              items: DifficultyLevel.values,
+              labelBuilder: _difficultyLabel,
+              onChanged: (v) => setState(() => _selectedDifficulty = v),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            _buildSectionTitle('Target Muscles (optional)', tt),
+            const SizedBox(height: 8),
+            _buildMuscleGroupSelector(cs),
+            const SizedBox(height: 16),
             _buildSectionTitle('Duration (minutes)', tt),
             const SizedBox(height: 8),
             _buildDurationSelector(),
             const SizedBox(height: 24),
-            _buildSectionTitle('Target Muscles (optional)', tt),
-            const SizedBox(height: 8),
-            _buildMuscleGroupSelector(cs),
-            const SizedBox(height: 32),
-            FilledButton(
-              onPressed: _isGenerating ? null : _generate,
-              child: _isGenerating
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Generate Workout'),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _isGenerating ? null : _generate,
+                child: _isGenerating
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Generate Workout'),
+              ),
             ),
             if (_generatedWorkout != null) ...[
               const SizedBox(height: 24),
+              Container(key: _resultsKey),
               _buildSectionTitle('Generated Workout', tt),
               const SizedBox(height: 8),
               _buildWorkoutSummary(cs, tt),
@@ -142,32 +169,46 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  Widget _buildChipRow<T>({
-    required List<T> options,
-    required T selected,
+  Widget _buildDropdown<T>({
+    required T value,
+    required List<T> items,
     required String Function(T) labelBuilder,
-    required void Function(T) onSelected,
+    required void Function(T) onChanged,
   }) {
-    return Wrap(
-      spacing: 8,
-      children: options.map((option) {
-        return ChoiceChip(
-          label: Text(labelBuilder(option)),
-          selected: option == selected,
-          onSelected: (_) => onSelected(option),
-        );
-      }).toList(),
+    return DropdownButtonFormField<T>(
+      value: value,
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text(labelBuilder(item))))
+          .toList(),
+      onChanged: (v) {
+        if (v != null) onChanged(v);
+      },
     );
   }
 
   Widget _buildDurationSelector() {
-    return Slider(
-      value: _selectedDuration.toDouble(),
-      min: 15,
-      max: 60,
-      divisions: 9,
-      label: '${_selectedDuration} min',
-      onChanged: (v) => setState(() => _selectedDuration = v.round()),
+    return Column(
+      children: [
+        Text(
+          '$_selectedDuration min',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Slider(
+          value: _selectedDuration.toDouble(),
+          min: 15,
+          max: 60,
+          divisions: 9,
+          label: '${_selectedDuration} min',
+          onChanged: (v) => setState(() => _selectedDuration = v.round()),
+        ),
+      ],
     );
   }
 
@@ -348,6 +389,7 @@ class _GenerateWorkoutScreenState extends ConsumerState<GenerateWorkoutScreen> {
         _generatedWorkout = workout.copyWith(exercises: enrichedExercises);
         _isGenerating = false;
       });
+      _scrollToResults();
     } catch (e) {
       setState(() => _isGenerating = false);
       if (mounted) {

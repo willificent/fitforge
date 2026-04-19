@@ -24,7 +24,7 @@ Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combinin
 - **Bodyweight exercises** (push-ups, pull-ups, planks, etc.) must NOT show a weight field — display as `x reps` not `0 x reps`
 - **Exercises must be editable** — user can customize sets/reps/rest/equipment/instructions on any exercise
 - **Custom exercises** can be added via the Exercises tab
-- **Version displayed as v0.2.0**
+- **Version displayed as v0.1.1**
 - **Exercise reorder**: Long-press drag on ReorderableListView. Order is persisted via `displayOrder` column in WorkoutSets table. DAO queries order by `displayOrder` then `id`.
 - **"planned" badge removed** from Workout tab set rows — planned sets just show in muted color
 - **"Log" renamed to "Edit"** on Workout tab

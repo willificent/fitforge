@@ -6,6 +6,7 @@ import 'package:fitforge/presentation/screens/home/home_screen.dart';
 import 'package:fitforge/presentation/screens/workout/workout_tab_screen.dart';
 import 'package:fitforge/presentation/screens/generate_workout/generate_workout_screen.dart';
 import 'package:fitforge/presentation/screens/exercise_browser/exercise_browser_screen.dart';
+import 'package:fitforge/presentation/screens/exercise_browser/add_custom_exercise_screen.dart';
 import 'package:fitforge/presentation/screens/exercise_detail/exercise_detail_screen.dart';
 import 'package:fitforge/presentation/screens/history/history_shell.dart';
 import 'package:fitforge/presentation/screens/settings/settings_screen.dart';
@@ -105,6 +106,11 @@ final router = GoRouter(
         final extra = state.extra! as Map<String, dynamic>;
         return ExerciseDetailScreen(exercise: extra['exercise'] as Exercise);
       },
+    ),
+    GoRoute(
+      path: '/add-custom-exercise',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddCustomExerciseScreen(),
     ),
   ],
 );

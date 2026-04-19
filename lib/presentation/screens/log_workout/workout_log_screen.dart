@@ -247,7 +247,10 @@ class _WorkoutLogScreenState extends ConsumerState<WorkoutLogScreen> {
                 if (_restTimerActive) _buildRestTimer(cs, tt),
                 _buildProgressBar(cs, tt),
                 Expanded(child: _buildSetsList(cs, tt)),
-                _buildInputCard(cs, tt),
+                SafeArea(
+                  top: false,
+                  child: _buildInputCard(cs, tt),
+                ),
               ],
             ),
     );
