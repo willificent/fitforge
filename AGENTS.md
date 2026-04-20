@@ -4,6 +4,12 @@
 
 Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combining workout tracking (inspired by Verifit) with intelligent workout generation (inspired by gym-workout-generator). The app must be fully standalone with local storage (Drift/SQLite), optional WebDAV sync for backup, and progressive overload targets driven by actual workout history.
 
+## Current Status
+
+**v0.1.1 released!** Live at https://github.com/willificent/fitforge/releases/tag/v0.1.1 — APK is 62MB, fully functional on Android. User tested on device and provided feedback that was addressed in v0.1.1.
+
+**Next milestone**: v0.2.0 (data export, WebDAV sync, more tests, polish)
+
 ## Instructions
 
 - **Framework**: Flutter (Dart) — chosen for cross-platform Android + iOS support
@@ -19,18 +25,18 @@ Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combinin
 - **Seed data format**: Hardcoded Dart list
 - **6-tab navigation**: Home / Workout / Generate / Exercises / History / Settings
 - **Workout tab** is the user's "paper workout document" — tied to the date selected on Home, fully editable (add exercises, reorder via long-press drag, edit weight/reps targets, delete), with a "Start Workout" button at the bottom that triggers the guided session flow. No play button in the AppBar — the bottom Start Workout button is sufficient.
-- **Generate tab** creates workout routines and inserts them as "planned" (empty) sets into a specific date (user selects date). After generation: options are "Start Workout" (goes to Workout tab), "Add to Calendar" (goes to Workout tab), "Create Another" (stays on Generate)
+- **Generate tab** creates workout routines and inserts them as "planned" (empty) sets into a specific date (user selects date). After generation: options are "Start Workout" (goes to Workout tab), "Add to Calendar" (goes to Workout tab), "Create Another" (stays on Generate). Layout order: Date → Workout Type (dropdown) → Difficulty (dropdown) → Target Muscles → Duration → Generate button. Duration number always visible above slider. Auto-scrolls to generated results after pressing Generate.
 - **Home screen** shows calendar with date carousel and day view of all sets for the selected date. Two FABs: small `+` for add exercise, large `play_arrow` for navigate to Workout tab
-- **Bodyweight exercises** (push-ups, pull-ups, planks, etc.) must NOT show a weight field — display as `x reps` not `0 x reps`
+- **Bodyweight exercises** (push-ups, pull-ups, planks, etc.) must NOT show a weight field — display as `x reps` not `0 x reels`
 - **Exercises must be editable** — user can customize sets/reps/rest/equipment/instructions on any exercise
-- **Custom exercises** can be added via the Exercises tab
+- **Custom exercises** added via a full-screen form (not a dialog) accessible from Exercises tab `+` button
 - **Version displayed as v0.1.1**
 - **Exercise reorder**: Long-press drag on ReorderableListView. Order is persisted via `displayOrder` column in WorkoutSets table. DAO queries order by `displayOrder` then `id`.
 - **"planned" badge removed** from Workout tab set rows — planned sets just show in muted color
 - **"Log" renamed to "Edit"** on Workout tab
 - **Edit Set dialog** has a red Delete button alongside Cancel/Save
-- **Workout log screen (Edit popup)**: Back button goes to `/workout` by default, accepts optional `returnPath` param. Has edit (pencil) icon and delete (X) icon per set row, with 8px spacing between for fat fingers.
-- **Workout session**: "Start Exercise" button is large (56px height, 28px play icon). Exit button goes to `/workout` not `/home`. Finished view: "Back to Workout" (primary, goes to /workout) + "Go Home" (secondary, goes to /home).
+- **Workout log screen (Edit popup)**: Back button goes to `/workout` by default, accepts optional `returnPath` param. Has edit (pencil) icon and delete (X) icon per set row, with 8px spacing between for fat fingers. SafeArea bottom padding for Android 3-button nav bar.
+- **Workout session**: "Start Exercise" button is large (56px height, 28px play icon). SafeArea bottom padding for Android 3-button nav bar. Exit button goes to `/workout` not `/home`. Finished view: "Back to Workout" (primary, goes to /workout) + "Go Home" (secondary, goes to /home).
 - **Date in Workout tab** is tappable — opens DatePicker via `showDatePicker`
 - **WebDAV**: Credentials form works, but connection testing has known issues (times out even with 10s timeout added — likely a CORS or network issue on the dev machine, not a code bug)
 - **Web deployment**: Must serve `sqlite3.wasm` and `drift_worker.js` from `web/` directory, use `WasmDatabase.open` (not the old `WebDatabase`), and run with COOP/COEP headers
@@ -55,6 +61,9 @@ Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combinin
 - **Flutter 3.41.6 requires**: Android SDK 36, build-tools 28.0.3, JDK 21 (full JDK with javac, not just JRE)
 - **APK build** requires JAVA_HOME set to `/usr/lib/jvm/java-21-openjdk-amd64` and ANDROID_HOME set to the SDK path
 - **GoRouter `context.pop()`** doesn't always work for full-screen routes on the root navigator — prefer `context.go('/path')` with explicit return paths, or use `Navigator.pop(context)` for dialogs
+- **Android 3-button nav bar** covers bottom content — use `SafeArea(top: false)` on bottom UI elements (input cards, buttons) to ensure they're not hidden behind the system navigation bar
+- **ChoiceChip rows** take up too much vertical space — dropdowns (`DropdownButtonFormField`) are more compact for Workout Type and Difficulty selectors on the Generate tab
+- **Dialog forms** don't work well for multi-field input on mobile — the Custom Exercise screen was converted from a dialog to a full-screen `Scaffold` with a `Form` and `ListView` for proper spacing and field labels using `OutlineInputBorder`
 
 ## Accomplished
 
@@ -139,6 +148,24 @@ Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combinin
 - **Version bumped** to v0.2.0 (pubspec.yaml: 0.2.0+2, settings screen: 'v0.2.0')
 - All 30 tests passing, 0 analyze errors
 
+### Session 9 — COMPLETE (v0.1.0 Release + v0.1.1 UI Polish)
+- **First APK release** — v0.1.0 built and published to GitHub at https://github.com/willificent/fitforge/releases/tag/v0.1.0
+- **Android 3-button nav bar fix** — Log screen bottom input card and Workout session screen both wrapped with `SafeArea(top: false)` so "+ Log Set" and "Start Exercise" buttons aren't hidden behind the traditional Android navigation bar
+- **Generate tab redesign**:
+  - Reordered fields: Date → Workout Type → Difficulty → Target Muscles → Duration → Generate Workout button
+  - Workout Type and Difficulty changed from chip rows to compact `DropdownButtonFormField` dropdowns
+  - Duration number always visible above the slider (not just on drag)
+  - Generate Workout button made full-width (`SizedBox(width: double.infinity)`)
+  - After generation, auto-scrolls down to the results section using `Scrollable.ensureVisible()` with a `GlobalKey`
+- **Custom Exercise screen converted from dialog to full screen**:
+  - New `AddCustomExerciseScreen` as a full `Scaffold` with `SafeArea` and `Form` validation
+  - Organized into sections: "Exercise Details" (name, type dropdown, difficulty dropdown, body part dropdown), "Set Configuration" (sets, reps, rest), "Additional Info" (equipment, instructions)
+  - All fields use `OutlineInputBorder` for clear label/field boundaries
+  - Added route `/add-custom-exercise` on root navigator in `app.dart`
+  - Exercise browser `+` button now uses `context.push('/add-custom-exercise')` instead of `showDialog`
+- **Version bumped** to v0.1.1+1, settings screen shows 'v0.1.1'
+- **v0.1.1 release** published to https://github.com/willificent/fitforge/releases/tag/v0.1.1
+
 ## Schema
 
 ### Database version: 3
@@ -179,7 +206,7 @@ Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combinin
 ### Source code (primary project)
 - `/home/william/Projects/fitforge/` — The FitForge Flutter project root
 - `lib/main.dart` — App entry point
-- `lib/app.dart` — GoRouter with 6-tab NavigationBar (Home/Workout/Generate/Exercises/History/Settings) + full-screen routes
+- `lib/app.dart` — GoRouter with 6-tab NavigationBar (Home/Workout/Generate/Exercises/History/Settings) + full-screen routes (/log-workout, /workout-session, /exercise-detail, /add-custom-exercise)
 - `lib/core/` — Theme, constants, extensions
 - `lib/core/constants/app_constants.dart` — App constants including progression rates
 - `lib/data/database/app_database.dart` — Drift database definition, schemaVersion=3, migrations for isBodyweight (v2) and displayOrder (v3)
@@ -197,14 +224,15 @@ Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combinin
 - `lib/presentation/providers/app_providers.dart` — All Riverpod providers including `selectedDateProvider` and `webdavSyncProvider`
 - `lib/presentation/screens/home/home_screen.dart` — Date carousel + workout day view, uses selectedDateProvider, two FABs (+ and play_arrow→/workout)
 - `lib/presentation/screens/workout/workout_tab_screen.dart` — Workout tab: ReorderableListView (long-press drag, persisted via displayOrder), exercise section cards, add exercise sheet, date picker in AppBar, Start Workout button at bottom
-- `lib/presentation/screens/log_workout/workout_log_screen.dart` — Weight/reps input, rest timer, edit+delete icons per set, back button (accepts returnPath), bodyweight exercise support
-- `lib/presentation/screens/workout_session/workout_session_screen.dart` — Guided session flow (walks through GeneratedWorkout exercises), large Start Exercise button, Exit→/workout, finished view with Back to Workout + Go Home
-- `lib/presentation/screens/exercise_browser/exercise_browser_screen.dart` — Search + body part tabs, + custom exercise button
+- `lib/presentation/screens/log_workout/workout_log_screen.dart` — Weight/reps input, rest timer, edit+delete icons per set, back button (accepts returnPath), bodyweight exercise support, SafeArea bottom padding
+- `lib/presentation/screens/workout_session/workout_session_screen.dart` — Guided session flow (walks through GeneratedWorkout exercises), large Start Exercise button, SafeArea bottom padding, Exit→/workout, finished view with Back to Workout + Go Home
+- `lib/presentation/screens/exercise_browser/exercise_browser_screen.dart` — Search + body part tabs, + button navigates to /add-custom-exercise
+- `lib/presentation/screens/exercise_browser/add_custom_exercise_screen.dart` — Full-screen custom exercise form with sections (Exercise Details, Set Configuration, Additional Info), OutlineInputBorder fields, Form validation
 - `lib/presentation/screens/exercise_detail/exercise_detail_screen.dart` — Detail with edit button, PRs, favorite, log CTA
-- `lib/presentation/screens/generate_workout/generate_workout_screen.dart` — Date picker, type/difficulty/duration/muscle selectors, post-gen actions (Start/Add/Create Another)
+- `lib/presentation/screens/generate_workout/generate_workout_screen.dart` — Date picker, Type/Difficulty as dropdowns, muscle chips, Duration slider with always-visible number, full-width Generate button, auto-scroll to results after generation
 - `lib/presentation/screens/history/history_shell.dart` — Diary tab (month nav, expandable entries) + Charts tab
 - `lib/presentation/screens/history/workout_charts_tab.dart` — Volume line chart, exercise frequency bar chart (fl_chart)
-- `lib/presentation/screens/settings/settings_screen.dart` — Theme, units, progression, WebDAV config sheet, clear data, v0.2.0
+- `lib/presentation/screens/settings/settings_screen.dart` — Theme, units, progression, WebDAV config sheet, clear data, v0.1.1
 
 ### Web assets
 - `web/sqlite3.wasm` — SQLite WebAssembly (from sqlite3.dart release 2.9.4)
@@ -218,8 +246,10 @@ Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combinin
 - `test/domain/generator/progressive_target_calculator_test.dart`
 - `test/widget_test.dart`
 
+Note: Tests require `LD_LIBRARY_PATH=/home/linuxbrew/.linuxbrew/lib` for libsqlite3 on lobstertank. 7 pure-Dart tests pass without it; 23 database tests fail without it.
+
 ### Config
-- `pubspec.yaml` — version 0.2.0+2
+- `pubspec.yaml` — version 0.1.1+1
 - `analysis_options.yaml`
 - `.github/workflows/ci.yml`
 
@@ -233,7 +263,7 @@ Build "FitForge" — a cross-platform (Android + iOS + Web) fitness app combinin
 ```bash
 LD_LIBRARY_PATH=/home/linuxbrew/.linuxbrew/lib:$LD_LIBRARY_PATH ~/Projects/flutter/bin/flutter test
 ```
-Note: The LD_LIBRARY_PATH is needed on lobstertank (this machine) for libsqlite3. On the new desktop, check if sqlite3 dev libs are installed, or install via `sudo apt install libsqlite3-dev`.
+Note: The LD_LIBRARY_PATH is needed on lobstertank for libsqlite3. On other machines, check if sqlite3 dev libs are installed, or install via `sudo apt install libsqlite3-dev`.
 
 #### Run web server
 ```bash
@@ -258,7 +288,7 @@ flutter pub run build_runner build --delete-conflicting-outputs
 The major features for the next checkpoint (v0.2.0) are **data export** and **WebDAV sync**:
 
 1. **Data export** — Allow users to export their workout data as CSV (Verifit-compatible format). Must work on both mobile and web.
-2. **WebDAV sync** — Fix the connection testing timeout issue (likely CORS on web, but should work on mobile). Ensure upload/download/delete of backup files works reliably.
+2. **WebDAV sync** — Fix the connection testing timeout issue (likely CORS on web, but should work on mobile where CORS doesn't apply). Ensure upload/download/delete of backup files works reliably.
 3. **Build and publish release APK** — Create a v0.2.0 GitHub release with the APK attached.
 4. **More widget tests** — The current 30 tests cover repository and domain layers. Need widget tests for screens.
 5. **Charts improvements** — 1RM trends, bodyweight exercise tracking, better period selectors.
@@ -267,6 +297,4 @@ The major features for the next checkpoint (v0.2.0) are **data export** and **We
 ## Known issues
 
 - **WebDAV connection test** times out even with 10s timeout — likely a CORS issue when running on web, but needs re-testing on mobile where CORS doesn't apply
-- **No Android SDK 36 or build-tools 28.0.3** on lobstertank — Flutter 3.41.6 requires these for APK builds. Need to install on the new desktop.
-- **Only JRE installed** on lobstertank, not JDK — `javac` is missing so APK builds fail. Need `openjdk-21-jdk-headless` on the new desktop.
-- **lobstertank disk is nearly full** (was 100% at one point, now ~96%). The new desktop should have plenty of space for builds.
+- **APK build environment** requires JDK 21 (JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64) and Android SDK 36 with build-tools 28.0.3
